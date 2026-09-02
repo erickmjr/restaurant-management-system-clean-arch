@@ -1,0 +1,31 @@
+{
+  "name": "sistema-de-gestao-restaurante",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "biome check",
+    "lint:fix": "biome lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erickmjr/Sistema-de-Gestao-Restaurante-CleanArch-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/erickmjr/Sistema-de-Gestao-Restaurante-CleanArch-/issues"
+  },
+  "homepage": "https://github.com/erickmjr/Sistema-de-Gestao-Restaurante-CleanArch-#readme",
+  "devDependencies": {
+    "@biomejs/biome": "2.5.11",
+    "@types/node": "^26.4.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "prisma": "8.0.0-rc.12"
+  }
+}

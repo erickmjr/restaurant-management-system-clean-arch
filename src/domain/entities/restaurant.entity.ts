@@ -1,83 +1,103 @@
-interface IRestaurant {
-    id: string;
-    name: string;
-    ownerId: string;
-    photo: string | null;
-    updatedAt: Date;
-    createdAt: Date;
-    deletedAt: Date | null;
+import {
+	EmptyRestaurantNameError,
+	RestaurantAlreadyDeletedError,
+	RestaurantNotDeletedError,
+} from '../errors/restaurant.errors.js';
+
+export interface RestaurantProps {
+	id: string;
+	name: string;
+	photo: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	deletedAt: Date | null;
+}
+
+function normalizeName(name: string): string {
+	const trimmed = name.trim();
+
+	if (trimmed.length === 0) {
+		throw new EmptyRestaurantNameError();
+	}
+
+	return trimmed;
 }
 
 export class Restaurant {
-    get id() {
-        return this.props.id;
-    }
+	private constructor(private props: RestaurantProps) {}
 
-    get name() {
-        return this.props.name;
-    }
+	static create(input: { id: string; name: string; photo?: string | null; now: Date }): Restaurant {
+		return new Restaurant({
+			id: input.id,
+			name: normalizeName(input.name),
+			photo: input.photo ?? null,
+			createdAt: input.now,
+			updatedAt: input.now,
+			deletedAt: null,
+		});
+	}
 
-    get ownerId() {
-        return this.props.ownerId;
-    }
+	static restore(props: RestaurantProps): Restaurant {
+		return new Restaurant({ ...props });
+	}
 
-    get photo() {
-        return this.props.photo;
-    }
+	get id(): string {
+		return this.props.id;
+	}
 
-    get updatedAt() {
-        return this.props.updatedAt;
-    }
+	get name(): string {
+		return this.props.name;
+	}
 
-    get createdAt() {
-        return this.props.createdAt;
-    }
+	get photo(): string | null {
+		return this.props.photo;
+	}
 
-    get deletedAt() {
-        return this.props.deletedAt;
-    }
+	get createdAt(): Date {
+		return this.props.createdAt;
+	}
 
-    protected props: IRestaurant;
+	get updatedAt(): Date {
+		return this.props.updatedAt;
+	}
 
-    constructor(
-        props: {
-            createdAt: string;
-            updatedAt: string;
-            deletedAt?: string;
-            id: string;
-            ownerId: string;
-            photo?: string;
-            name: string;
-        }
-    ) {
-        this.props = {
-            ...props,
-            createdAt: props.createdAt ? new Date(props.createdAt) : new Date(),
-            updatedAt: props.updatedAt ? new Date(props.updatedAt) : new Date(),
-            deletedAt: props.deletedAt ? new Date(props.deletedAt) : null,
-            id: props.id,
-            ownerId: props.ownerId,
-            photo: props.photo ?? null
-        }
-    };
+	get deletedAt(): Date | null {
+		return this.props.deletedAt;
+	}
 
-    delete(): boolean {
-        if (this.props.deletedAt) 
-            return false;
+	isDeleted(): boolean {
+		return this.props.deletedAt !== null;
+	}
 
-        this.props.deletedAt = new Date();
+	rename(name: string, now: Date): void {
+		this.props.name = normalizeName(name);
+		this.props.updatedAt = now;
+	}
 
-        return true;
-    }
+	changePhoto(photo: string | null, now: Date): void {
+		this.props.photo = photo;
+		this.props.updatedAt = now;
+	}
 
-    restore(): boolean {
-        if (!this.props.deletedAt)
-            return false;
+	delete(now: Date): void {
+		if (this.isDeleted()) {
+			throw new RestaurantAlreadyDeletedError(this.props.id);
+		}
 
-        this.props.deletedAt = null;
-        this.props.updatedAt = new Date();
+		this.props.deletedAt = now;
+		this.props.updatedAt = now;
+	}
 
-        return true;
-    }
+	restoreDeleted(now: Date): void {
+		if (!this.isDeleted()) {
+			throw new RestaurantNotDeletedError(this.props.id);
+		}
 
+		this.props.deletedAt = null;
+		this.props.updatedAt = now;
+	}
+
+	snapshot(): RestaurantProps {
+		return { ...this.props };
+	}
 }

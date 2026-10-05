@@ -9,6 +9,7 @@ APP_USER="${APP_USER:-caixa}"
 APP_DIR="${APP_DIR:-/opt/caixa}"
 SSH_ALLOW_USER="${SSH_ALLOW_USER:-ubuntu}"
 REBOOT_TIME_UTC="${REBOOT_TIME_UTC:-07:00}"
+NODE_VERSION="${NODE_VERSION:-22.12.0}"
 
 if [[ "${EUID}" -ne 0 ]]; then
 	echo "rode com sudo" >&2
@@ -20,6 +21,7 @@ export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
 apt-get update
 apt-get upgrade -y -o Dpkg::Options::=--force-confold
+apt-get install -y curl xz-utils ca-certificates
 apt-get autoremove --purge -y
 
 echo "==> relogio em UTC e NTP"
@@ -66,6 +68,27 @@ APT::Periodic::Unattended-Upgrade "1";
 APT::Periodic::AutocleanInterval "7";
 EOF
 
+echo "==> node ${NODE_VERSION}"
+# Tarball oficial em vez de repositorio de terceiro, para a versao ser exatamente
+# a mesma do desenvolvimento. So o binario node e instalado, npm nao e preciso
+# porque o artefato de deploy e um arquivo unico ja empacotado.
+case "$(uname -m)" in
+	x86_64) NODE_ARCH="x64" ;;
+	aarch64) NODE_ARCH="arm64" ;;
+	*) echo "arquitetura nao suportada: $(uname -m)" >&2; exit 1 ;;
+esac
+
+if [[ "$(/usr/local/bin/node --version 2>/dev/null || true)" != "v${NODE_VERSION}" ]]; then
+	tmp="$(mktemp -d)"
+	curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" -o "${tmp}/node.tar.xz"
+	tar -xJf "${tmp}/node.tar.xz" -C "${tmp}"
+	rm -rf /usr/local/lib/nodejs
+	install -d /usr/local/lib/nodejs
+	cp -a "${tmp}/node-v${NODE_VERSION}-linux-${NODE_ARCH}/." /usr/local/lib/nodejs/
+	ln -sf /usr/local/lib/nodejs/bin/node /usr/local/bin/node
+	rm -rf "${tmp}"
+fi
+
 echo "==> usuario e diretorio da aplicacao"
 if ! id -u "${APP_USER}" > /dev/null 2>&1; then
 	useradd --system --shell /usr/sbin/nologin --home-dir "${APP_DIR}" "${APP_USER}"
@@ -74,6 +97,8 @@ install -d -o "${APP_USER}" -g "${APP_USER}" -m 750 "${APP_DIR}"
 
 echo
 echo "==> conferencia"
+/usr/local/bin/node --version
+echo
 sshd -T | grep -Ei 'permitrootlogin|passwordauthentication|maxauthtries|maxstartups|logingracetime|allowusers|x11forwarding'
 echo
 timedatectl | grep -Ei 'time zone|synchronized|ntp service'

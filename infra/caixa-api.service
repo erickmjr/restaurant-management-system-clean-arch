@@ -1,0 +1,46 @@
+[Unit]
+Description=API de fluxo de caixa para restaurantes
+Documentation=https://github.com/erickmjr/restaurant-management-system-clean-arch
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=caixa
+Group=caixa
+WorkingDirectory=/opt/caixa
+ExecStart=/usr/local/bin/node --env-file=/opt/caixa/.env /opt/caixa/server.cjs
+
+Restart=always
+RestartSec=3
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# A VM tem 1 GB e nao tem swap. MemoryHigh estrangula antes de matar,
+# MemoryMax e o teto, e OOMPolicy garante que o systemd reinicie em vez de
+# deixar o kernel escolher outra vitima.
+MemoryHigh=300M
+MemoryMax=400M
+OOMPolicy=stop
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/caixa
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallArchitectures=native
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=caixa-api
+
+[Install]
+WantedBy=multi-user.target

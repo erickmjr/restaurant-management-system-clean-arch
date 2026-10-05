@@ -6,6 +6,8 @@
 	"scripts": {
 		"dev": "node --env-file-if-exists=.env --import tsx --watch src/main/server.ts",
 		"build": "tsc",
+		"bundle": "esbuild dist/main/server.js --bundle --platform=node --target=node22 --format=cjs --outfile=build/server.cjs",
+		"artifact": "pnpm build && pnpm bundle",
 		"start": "node --env-file-if-exists=.env dist/main/server.js",
 		"test": "vitest run",
 		"test:watch": "vitest",
@@ -35,6 +37,7 @@
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/node": "^26.4.0",
 		"@types/supertest": "^7.2.1",
+		"esbuild": "^0.28.2",
 		"prisma": "^7.10.0",
 		"supertest": "^7.3.0",
 		"tsx": "^4.23.15",

@@ -45,6 +45,9 @@ importers:
       '@types/supertest':
         specifier: ^7.2.1
         version: 7.2.1
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       prisma:
         specifier: ^7.10.0
         version: 7.10.0(@types/react@19.3.0)(magicast@0.5.4)(react-dom@19.3.0(react@19.2.8))(react@19.2.8)(typescript@7.0.2)

@@ -64,6 +64,14 @@ journalctl -u caixa-api -n 30 --no-pager
 
 Esperado é `{"status":"ok"}`.
 
+Para validar de verdade, que é o fluxo inteiro tocando o Neon, mande o smoke test junto no `scp` e rode na VM.
+
+```bash
+node /tmp/smoke-test.mjs http://localhost:3333
+```
+
+Ele cria restaurante, dono, catálogos, lança entrada e saída, confere os totais e os nomes vindos do join, corrige, remove e confirma que competência futura é recusada com 422. Cada execução deixa um restaurante de teste no banco, e ele imprime o id para você limpar depois.
+
 ## Migrations
 
 Rodam da sua máquina contra o Neon, nunca da VM.

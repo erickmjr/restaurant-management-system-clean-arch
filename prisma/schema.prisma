@@ -1,0 +1,159 @@
+generator client {
+	provider = "prisma-client-js"
+}
+
+datasource db {
+	provider = "postgresql"
+}
+
+enum OperatorRole {
+	OWNER
+	EMPLOYEE
+}
+
+model Restaurant {
+	id        String    @id
+	name      String
+	photo     String?
+	createdAt DateTime
+	updatedAt DateTime
+	deletedAt DateTime?
+
+	operators         Operator[]
+	balances          Balance[]
+	paymentMethods    PaymentMethod[]
+	expenseCategories ExpenseCategory[]
+	paymentTags       PaymentTag[]
+
+	@@map("restaurants")
+}
+
+model Operator {
+	id           String       @id
+	restaurantId String
+	name         String
+	email        String
+	passwordHash String
+	role         OperatorRole
+	createdAt    DateTime
+	updatedAt    DateTime
+
+	restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+	@@unique([restaurantId, email])
+	@@index([restaurantId])
+	@@map("operators")
+}
+
+model Balance {
+	id           String   @id
+	restaurantId String
+
+	competence   DateTime @db.Date
+	createdAt    DateTime
+	updatedAt    DateTime
+	updatedBy    String
+
+	restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+	entries    Entry[]
+	expenses   Expense[]
+
+	@@unique([restaurantId, competence])
+	@@index([restaurantId, competence])
+	@@map("balances")
+}
+
+model Entry {
+	id              String   @id
+	balanceId       String
+	operatorId      String
+	paymentMethodId String
+	amountInCents   Int
+	observation     String?
+	createdAt       DateTime
+	updatedAt       DateTime
+	updatedBy       String
+
+	balance       Balance       @relation(fields: [balanceId], references: [id], onDelete: Cascade)
+	paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id], onDelete: Restrict)
+
+	@@index([balanceId])
+	@@index([paymentMethodId])
+	@@map("entries")
+}
+
+model Expense {
+	id                String   @id
+	balanceId         String
+	operatorId        String
+	expenseCategoryId String
+	amountInCents     Int
+	observation       String?
+	createdAt         DateTime
+	updatedAt         DateTime
+	updatedBy         String
+
+	balance         Balance         @relation(fields: [balanceId], references: [id], onDelete: Cascade)
+	expenseCategory ExpenseCategory @relation(fields: [expenseCategoryId], references: [id], onDelete: Restrict)
+
+	@@index([balanceId])
+	@@index([expenseCategoryId])
+	@@map("expenses")
+}
+
+model PaymentMethod {
+	id           String   @id
+	restaurantId String
+	name         String
+	createdAt    DateTime
+	updatedAt    DateTime
+
+	restaurant Restaurant                @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+	entries    Entry[]
+	tags       PaymentMethodPaymentTag[]
+
+	@@unique([restaurantId, name])
+	@@index([restaurantId])
+	@@map("payment_methods")
+}
+
+model ExpenseCategory {
+	id           String   @id
+	restaurantId String
+	name         String
+	createdAt    DateTime
+	updatedAt    DateTime
+
+	restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+	expenses   Expense[]
+
+	@@unique([restaurantId, name])
+	@@index([restaurantId])
+	@@map("expense_categories")
+}
+
+model PaymentTag {
+	id           String   @id
+	restaurantId String
+	name         String
+	createdAt    DateTime
+	updatedAt    DateTime
+
+	restaurant     Restaurant                @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+	paymentMethods PaymentMethodPaymentTag[]
+
+	@@unique([restaurantId, name])
+	@@index([restaurantId])
+	@@map("payment_tags")
+}
+
+model PaymentMethodPaymentTag {
+	paymentMethodId String
+	paymentTagId    String
+
+	paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
+	paymentTag    PaymentTag    @relation(fields: [paymentTagId], references: [id], onDelete: Cascade)
+
+	@@id([paymentMethodId, paymentTagId])
+	@@map("payment_method_payment_tags")
+}
